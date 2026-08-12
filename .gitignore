@@ -1,0 +1,24 @@
+# Flutter
+.dart_tool/
+.flutter-plugins
+.flutter-plugins-dependencies
+.packages
+build/
+.pub-cache/
+.pub/
+
+# IDE
+.idea/
+.vscode/
+
+# Env secrets
+.env
+
+# Platform build outputs
+android/app/debug
+android/app/profile
+android/app/release
+ios/Flutter/Flutter.framework
+windows/flutter/ephemeral
+linux/flutter/ephemeral
+macos/Flutter/ephemeral
