@@ -3,6 +3,7 @@ import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:provider/provider.dart';
 import 'app.dart';
 import 'core/app_settings.dart';
+import 'services/favorites_repository.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -11,9 +12,15 @@ Future<void> main() async {
   final settings = AppSettings();
   await settings.load();
 
+  final favorites = FavoritesRepository();
+  await favorites.load();
+
   runApp(
-    ChangeNotifierProvider.value(
-      value: settings,
+    MultiProvider(
+      providers: [
+        ChangeNotifierProvider.value(value: settings),
+        ChangeNotifierProvider.value(value: favorites),
+      ],
       child: const FlickPadApp(),
     ),
   );

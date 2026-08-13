@@ -90,4 +90,30 @@ class MediaItem {
   }
 
   bool get hasImage => posterUrl != null || backdropUrl != null;
+
+  Map<String, dynamic> toJson() => {
+        'id': id,
+        'type': type.name,
+        'title': title,
+        'overview': overview,
+        'posterUrl': posterUrl,
+        'backdropUrl': backdropUrl,
+        'rating': rating,
+        'releaseDate': releaseDate,
+        'source': source,
+      };
+
+  factory MediaItem.fromJson(Map<String, dynamic> json) {
+    return MediaItem(
+      id: json['id'],
+      type: MediaType.values.byName(json['type']),
+      title: json['title'],
+      overview: json['overview'],
+      posterUrl: json['posterUrl'],
+      backdropUrl: json['backdropUrl'],
+      rating: (json['rating'] as num?)?.toDouble(),
+      releaseDate: json['releaseDate'],
+      source: json['source'],
+    );
+  }
 }

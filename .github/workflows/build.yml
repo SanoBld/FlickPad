@@ -1,0 +1,138 @@
+name: Build FlickPad
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+env:
+  FLUTTER_VERSION: '3.24.0'
+
+jobs:
+  build-android:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          channel: stable
+      - run: flutter pub get
+      - name: Write .env
+        run: echo "TMDB_API_KEY=${{ secrets.TMDB_API_KEY }}" >> .env && echo "RAWG_API_KEY=${{ secrets.RAWG_API_KEY }}" >> .env && echo "OMDB_API_KEY=${{ secrets.OMDB_API_KEY }}" >> .env
+      - name: Build APK (split per abi)
+        run: flutter build apk --release --split-per-abi --target-platform android-arm,android-arm64,android-x64
+      - uses: actions/upload-artifact@v4
+        with:
+          name: android-apks
+          path: build/app/outputs/flutter-apk/*.apk
+
+  build-windows:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          channel: stable
+      - run: flutter pub get
+      - name: Write .env
+        shell: bash
+        run: echo "TMDB_API_KEY=${{ secrets.TMDB_API_KEY }}" >> .env && echo "RAWG_API_KEY=${{ secrets.RAWG_API_KEY }}" >> .env && echo "OMDB_API_KEY=${{ secrets.OMDB_API_KEY }}" >> .env
+      - name: Enable windows desktop
+        run: flutter config --enable-windows-desktop
+      - name: Build Windows x64
+        run: flutter build windows --release
+      - name: Build Windows ARM64
+        run: flutter build windows --release --target-platform=windows-arm64
+        continue-on-error: true
+      - uses: actions/upload-artifact@v4
+        with:
+          name: windows-x64
+          path: build/windows/x64/runner/Release/**
+      - uses: actions/upload-artifact@v4
+        with:
+          name: windows-arm64
+          path: build/windows/arm64/runner/Release/**
+        continue-on-error: true
+
+  build-macos:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          channel: stable
+      - run: flutter pub get
+      - name: Write .env
+        run: echo "TMDB_API_KEY=${{ secrets.TMDB_API_KEY }}" >> .env && echo "RAWG_API_KEY=${{ secrets.RAWG_API_KEY }}" >> .env && echo "OMDB_API_KEY=${{ secrets.OMDB_API_KEY }}" >> .env
+      - name: Enable macos desktop
+        run: flutter config --enable-macos-desktop
+      - name: Build macOS
+        run: flutter build macos --release
+      - uses: actions/upload-artifact@v4
+        with:
+          name: macos-app
+          path: build/macos/Build/Products/Release/*.app
+
+  build-linux:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install Linux build deps
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y clang cmake ninja-build pkg-config libgtk-3-dev liblzma-dev
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          channel: stable
+      - run: flutter pub get
+      - name: Write .env
+        run: echo "TMDB_API_KEY=${{ secrets.TMDB_API_KEY }}" >> .env && echo "RAWG_API_KEY=${{ secrets.RAWG_API_KEY }}" >> .env && echo "OMDB_API_KEY=${{ secrets.OMDB_API_KEY }}" >> .env
+      - name: Enable linux desktop
+        run: flutter config --enable-linux-desktop
+      - name: Build Linux
+        run: flutter build linux --release
+      - uses: actions/upload-artifact@v4
+        with:
+          name: linux-bundle
+          path: build/linux/x64/release/bundle/**
+
+  build-web:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          channel: stable
+      - run: flutter pub get
+      - name: Write .env
+        run: echo "TMDB_API_KEY=${{ secrets.TMDB_API_KEY }}" >> .env && echo "RAWG_API_KEY=${{ secrets.RAWG_API_KEY }}" >> .env && echo "OMDB_API_KEY=${{ secrets.OMDB_API_KEY }}" >> .env
+      - name: Build Web
+        run: flutter build web --release
+      - uses: actions/upload-artifact@v4
+        with:
+          name: web-build
+          path: build/web/**
+
+  release:
+    needs: [build-android, build-windows, build-macos, build-linux, build-web]
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main'
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+      - name: Zip artifacts
+        run: |
+          cd artifacts
+          for d in */; do zip -r "../${d%/}.zip" "$d"; done
+      - name: Create release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: build-${{ github.run_number }}
+          files: '*.zip'
+          generate_release_notes: true

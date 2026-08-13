@@ -1,10 +1,12 @@
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import '../../models/media_item.dart';
 import '../../models/review.dart';
 import '../../models/video_trailer.dart';
 import '../../services/movie_repository.dart';
 import '../../services/game_repository.dart';
+import '../../services/favorites_repository.dart';
 import '../../widgets/image_gallery.dart';
 import '../../widgets/trailer_list.dart';
 
@@ -64,6 +66,10 @@ class _DetailsScreenState extends State<DetailsScreen> {
     final heroUrl = widget.item.backdropUrl ?? widget.item.posterUrl;
 
     return Scaffold(
+      floatingActionButton: FloatingActionButton(
+        onPressed: () => _showFolderPicker(context),
+        child: const Icon(Icons.favorite_border),
+      ),
       body: CustomScrollView(
         slivers: [
           SliverAppBar(
@@ -147,6 +153,36 @@ class _DetailsScreenState extends State<DetailsScreen> {
             ]),
           ),
         ],
+      ),
+    );
+  }
+
+  void _showFolderPicker(BuildContext context) {
+    final repo = context.read<FavoritesRepository>();
+    showDialog(
+      context: context,
+      builder: (dialogContext) => SimpleDialog(
+        title: const Text('Ajouter à un dossier'),
+        children: repo.folders
+            .map((f) => SimpleDialogOption(
+                  onPressed: () async {
+                    Navigator.pop(dialogContext);
+                    await repo.addToFolder(f.id, widget.item);
+                    if (context.mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(content: Text('Ajouté à "${f.name}"')),
+                      );
+                    }
+                  },
+                  child: Row(
+                    children: [
+                      CircleAvatar(radius: 8, backgroundColor: f.color),
+                      const SizedBox(width: 10),
+                      Text(f.name),
+                    ],
+                  ),
+                ))
+            .toList(),
       ),
     );
   }
