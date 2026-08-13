@@ -60,7 +60,7 @@ class TmdbService {
     final data = jsonDecode(res.body);
     final backdrops = (data['backdrops'] as List? ?? []);
     return backdrops
-        .map((e) => 'https://image.tmdb.org/t/p/w780${e['file_path']}' as String)
+        .map((e) => 'https://image.tmdb.org/t/p/w780${e['file_path']}')
         .toList();
   }
 

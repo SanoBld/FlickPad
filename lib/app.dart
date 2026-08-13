@@ -17,10 +17,10 @@ class FlickPadApp extends StatelessWidget {
 
     return DynamicColorBuilder(
       builder: (lightDynamic, darkDynamic) {
-        final useDynamic = settings.useDynamicColor && lightDynamic != null;
+        final useDynamic = settings.useDynamicColor && lightDynamic != null && darkDynamic != null;
 
         final lightScheme = useDynamic
-            ? lightDynamic!.harmonized()
+            ? lightDynamic.harmonized()
             : AppTheme.fallbackScheme(settings.accentColor, Brightness.light);
         final darkScheme = useDynamic
             ? darkDynamic.harmonized()
