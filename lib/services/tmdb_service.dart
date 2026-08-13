@@ -3,6 +3,7 @@ import 'package:http/http.dart' as http;
 import '../core/api_keys.dart';
 import '../models/media_item.dart';
 import '../models/video_trailer.dart';
+import '../models/review.dart';
 
 // Primary source for movies and series
 class TmdbService {
@@ -74,5 +75,14 @@ class TmdbService {
         .map((e) => VideoTrailer.fromTmdb(e))
         .where((v) => v.isYoutube)
         .toList();
+  }
+
+  Future<List<Review>> reviews(String tmdbId, MediaType type) async {
+    final path = type == MediaType.series ? '/tv/$tmdbId/reviews' : '/movie/$tmdbId/reviews';
+    final res = await http.get(_uri(path));
+    if (res.statusCode != 200) throw Exception('TMDb reviews failed');
+    final data = jsonDecode(res.body);
+    final results = data['results'] as List? ?? [];
+    return results.map((e) => Review.fromTmdb(e)).toList();
   }
 }

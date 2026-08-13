@@ -1,5 +1,6 @@
 import '../models/media_item.dart';
 import '../models/video_trailer.dart';
+import '../models/review.dart';
 import 'tmdb_service.dart';
 import 'omdb_service.dart';
 
@@ -73,6 +74,16 @@ class MovieRepository {
     final rawId = id.replaceFirst('tmdb_', '');
     try {
       return await _tmdb.videos(rawId, type);
+    } catch (_) {
+      return [];
+    }
+  }
+
+  Future<List<Review>> reviews(String id, MediaType type) async {
+    if (!id.startsWith('tmdb_')) return [];
+    final rawId = id.replaceFirst('tmdb_', '');
+    try {
+      return await _tmdb.reviews(rawId, type);
     } catch (_) {
       return [];
     }
