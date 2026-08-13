@@ -40,15 +40,15 @@ class _TrailerPlayerState extends State<_TrailerPlayer> {
   @override
   void initState() {
     super.initState();
-    _controller = YoutubePlayerController(
-      initialVideoId: widget.trailer.key,
-      flags: const YoutubePlayerFlags(autoPlay: false, mute: false),
+    _controller = YoutubePlayerController.fromVideoId(
+      videoId: widget.trailer.key,
+      autoPlay: false,
     );
   }
 
   @override
   void dispose() {
-    _controller.dispose();
+    _controller.close();
     super.dispose();
   }
 
@@ -56,7 +56,7 @@ class _TrailerPlayerState extends State<_TrailerPlayer> {
   Widget build(BuildContext context) {
     return ClipRRect(
       borderRadius: BorderRadius.circular(12),
-      child: YoutubePlayer(controller: _controller, showVideoProgressIndicator: true),
+      child: YoutubePlayer(controller: _controller),
     );
   }
 }
